@@ -1,0 +1,114 @@
+
+   root $MAUTIC_ROOT/;
+   error_log /var/log/nginx/mautic.error;
+   access_log /var/log/nginx/mautic.access;
+
+   index index.php index.html index.htm index.nginx-debian.html;
+
+   location / {
+     # try to serve file directly, fallback to app.php
+     try_files $uri /index.php$is_args$args;
+   }
+
+   location ~ /(mtc.js|1.js|mtracking.gif|.*\.gif|mtc) {
+       # default_type "application/javascript";
+       try_files $uri /index.php$is_args$args;
+   }
+
+   # redirect some entire folders
+     rewrite ^/(vendor|translations|build)/.* /index.php break;
+
+   location ~ \.php$ {
+     # include snippets/fastcgi-php.conf;
+     include  fastcgi_params;
+     fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        fastcgi_param   SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+   }
+
+   location ~* ^/index.php {
+     # try_files $uri =404;
+     fastcgi_split_path_info ^(.+\.php)(/.+)$;
+     # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
+
+     fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+     #Note: If you install Mautic on iRedMail server, you should use the TCP socket instead.
+     #fastcgi_pass 127.0.0.1:9999;
+     fastcgi_index index.php;
+     fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+     include fastcgi_params;
+
+     fastcgi_buffer_size 128k;
+     fastcgi_buffers 256 16k;
+     fastcgi_busy_buffers_size 256k;
+     fastcgi_temp_file_write_size 256k;
+   }
+
+    # Deny everything else in /app folder except Assets folder in bundles
+    location ~ /app/bundles/.*/Assets/ {
+        allow all;
+        access_log off;
+    }
+    location ~ /app/ { deny all; }
+
+    # Deny everything else in /addons or /plugins folder except Assets folder in bundles
+    location ~ /(addons|plugins)/.*/Assets/ {
+        allow all;
+        access_log off;
+    }
+    # location ~ /(addons|plugins)/ { deny all; }
+
+    # Deny all php files in themes folder
+      location ~* ^/themes/(.*)\.php {
+        deny all;
+    }
+
+    # Don't log favicon
+    location = /favicon.ico {
+        log_not_found off;
+        access_log off;
+    }
+
+    # Don't log robots
+    location = /robots.txt  {
+        access_log off;
+        log_not_found off;
+    }
+
+    # Deny yml, twig, markdown, init file access
+    location ~* /(.*)\.(?:markdown|md|twig|yaml|yml|ht|htaccess|ini)$ {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+  # Allow access to certbot directory in order to obtain TLS certificate
+     location ~ /.well-known/acme-challenge {
+      allow all;
+   }
+
+  # Deny all attempts to access hidden files/folders such as .htaccess, .htpasswd, .DS_Store (Mac), etc...
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    # Deny all grunt, composer files
+    location ~* (Gruntfile|package|composer)\.(js|json)$ {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    # Deny access to any files with a .php extension in the uploads directory
+        location ~* /(?:uploads|files)/.*\.php$ {
+                deny all;
+    }
+
+     # A long browser cache lifetime can speed up repeat visits to your page
+  location ~* \.(jpg|jpeg|gif|png|webp|svg|woff|woff2|ttf|css|js|ico|xml)$ {
+       access_log        off;
+       log_not_found     off;
+       expires           360d;
+  }
