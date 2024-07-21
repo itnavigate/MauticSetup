@@ -60,13 +60,14 @@ set +o allexport
 
 if [ $GITHUB = true ]; then
   cd ~
-  wget -q https://github.com/mautic/mautic/releases/download/5.1.0/5.1.0.zip
+  wget -q https://github.com/mautic/mautic/archive/refs/tags/${MAUTIC_TAG}.zip -O mautic_install_${MAUTIC_TAG}.zip
 fi
 cd /var/www
 if [ $GITHUB = true ]; then
-  sudo unzip -qq ~/5.1.0.zip -d mautic
+  sudo unzip -oqq ~/mautic_install_${MAUTIC_TAG}.zip 
+  mv mautic-${MAUTIC_TAG} mautic
 else
-  sudo unzip -qq ~/95_mautic-510.zip -d mautic
+  sudo unzip -oqq ~/95_mautic-510.zip -d mautic
 fi
 sudo chown -R $USER:nginx $WWW_ROOT
 cd $WWW_ROOT
