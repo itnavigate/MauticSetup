@@ -59,13 +59,14 @@ source .env
 set +o allexport
 
 cd $WWW_ROOT
-find . -type f -not -perm 644 -exec chmod 644 {} +
-find . -type d -not -perm 755 -exec chmod 755 {} +
-chmod -R g+w var/cache/ var/logs/ app/config/
-chmod -R g+w media/files/ media/images/ translations/
-rm -rf var/cache/*
+sudo find . -type f -not -perm 644 -exec chmod 644 {} +
+sudo find . -type d -not -perm 755 -exec chmod 755 {} +
+sudo chmod -R g+w var/cache/ var/logs/ app/config/
+sudo chmod -R g+w media/files/ media/images/ translations/
+sudo rm -rf var/cache/*
+sudo chown -R nginx:nginx $WWW_ROOT
 
-php ./bin/console mautic:install $FQDN \
+sudo -u nginx php ./bin/console mautic:install $FQDN \
  --db_host=$DB_HOST \
  --db_port=$DB_PORT \
  --db_name=$DB_NAME \
@@ -92,4 +93,3 @@ php ./bin/console mautic:install $FQDN \
 # --mailer_spool_type=MAILER_SPOOL_TYPE    Spool mode (file|memory).
 # --mailer_spool_path=MAILER_SPOOL_PATH    Spool path.
 
-sudo chown -R nginx:nginx $WWW_ROOT
