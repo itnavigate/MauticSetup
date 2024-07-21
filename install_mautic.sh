@@ -65,7 +65,8 @@ fi
 cd /var/www
 if [ $GITHUB = true ]; then
   sudo unzip -oqq ~/mautic_install_${MAUTIC_TAG}.zip 
-  mv mautic-${MAUTIC_TAG} mautic
+  sudo mv mautic-${MAUTIC_TAG}/* mautic/
+  sudo rmdir mautic-${MAUTIC_TAG}
 else
   sudo unzip -oqq ~/95_mautic-510.zip -d mautic
 fi
