@@ -93,3 +93,10 @@ sudo -u nginx php ./bin/console mautic:install $FQDN \
 # --mailer_spool_type=MAILER_SPOOL_TYPE    Spool mode (file|memory).
 # --mailer_spool_path=MAILER_SPOOL_PATH    Spool path.
 
+sudo chmod g+w composer.json composer.lock
+composer require pabloveintimilla/mautic-amazon-ses
+sudo -u nginx php bin/console cache:clear
+sudo -u nginx php bin/console mautic:plugins:reload
+sudo -u nginx php ./bin/console mautic:webhooks:process
+sudo -u nginx php ./bin/console mautic:webhooks:delete_logs
+sudo -u nginx php ./bin/console mautic:cache:clear
