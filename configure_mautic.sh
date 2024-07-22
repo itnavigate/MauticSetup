@@ -65,6 +65,7 @@ sudo chmod -R g+w var/cache/ var/logs/ app/config/
 sudo chmod -R g+w media/files/ media/images/ translations/
 sudo rm -rf var/cache/*
 sudo chown -R nginx:nginx $WWW_ROOT
+sudo chmod g+w composer.json composer.lock
 
 sudo -u nginx php ./bin/console mautic:install $FQDN \
  --db_host=$DB_HOST \
@@ -93,10 +94,21 @@ sudo -u nginx php ./bin/console mautic:install $FQDN \
 # --mailer_spool_type=MAILER_SPOOL_TYPE    Spool mode (file|memory).
 # --mailer_spool_path=MAILER_SPOOL_PATH    Spool path.
 
-sudo chmod g+w composer.json composer.lock
 composer require pabloveintimilla/mautic-amazon-ses
 sudo -u nginx php bin/console cache:clear
 sudo -u nginx php bin/console mautic:plugins:reload
 sudo -u nginx php ./bin/console mautic:webhooks:process
 sudo -u nginx php ./bin/console mautic:webhooks:delete_logs
 sudo -u nginx php ./bin/console mautic:cache:clear
+
+(sudo -u nginx crontab -l 2>/dev/null || true; cat <<EOF
+* * * * * php /var/www/mautic/bin/console mautic:broadcasts:send --limit=500
+* * * * * php /var/www/mautic/bin/console mautic:campaigns:rebuild --batch-limit=100
+* * * * * php /var/www/mautic/bin/console mautic:segment:update --batch-limit=900
+* * * * * php /var/www/mautic/bin/console mautic:campaigns:trigger
+* * * * * php /var/www/mautic/bin/console mautic:import --limit=500
+* * * * * php /var/www/mautic/bin/console mautic:webhooks:process
+* * * * * php /var/www/mautic/bin/console mautic:reports:scheduler
+EOF
+) | sudo -u nginx crontab -
+
